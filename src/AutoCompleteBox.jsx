@@ -17,9 +17,9 @@ const AutoCompleteBox = ({ items = [], onSelect }) => {
     window.addEventListener("mousedown", handleClickOutside);
 
     return () => {
-      window, removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []);
+  });
 
   const handleClickOutside = (e) => {
     if (containerRef.current && !containerRef.current.contains(e.target)) {
@@ -35,6 +35,21 @@ const AutoCompleteBox = ({ items = [], onSelect }) => {
     });
   };
 
+  // generating list array for suggestion box
+  const searchList = useMemo(() => {
+    if (!text) return items;
+
+    setCursor(-1);
+    scrollToItem(0);
+
+    return (
+      items &&
+      items.filter((item) => {
+        return item.name.toLowerCase().includes(text.toLowerCase());
+      })
+    );
+  }, [items, text]);
+
   useEffect(() => {
     if (cursor < 0 || cursor > searchList.length || !searchListRef) {
       return () => {};
@@ -43,7 +58,7 @@ const AutoCompleteBox = ({ items = [], onSelect }) => {
     let listItems = Array.from(searchListRef.current.children);
 
     listItems[cursor] && scrollToItem(listItems[cursor].offsetTop);
-  }, [cursor]);
+  }, [cursor, searchList]);
 
   // Handling keyboard navigations
   const handleKeyboard = (e) => {
@@ -61,32 +76,17 @@ const AutoCompleteBox = ({ items = [], onSelect }) => {
         break;
       case "Enter":
       case cursor > 0:
-        {
-          setText(searchList[cursor].name);
-          hideSuggestions();
-          onSelect(searchList[cursor]);
-        }
+        setText(searchList[cursor].name);
+        hideSuggestions();
+        onSelect(searchList[cursor]);
         break;
       case "Backspace":
         showSuggestions();
         break;
+      default:
+        showSuggestions();
     }
   };
-
-  // generating list array for suggestion box
-  const searchList = useMemo(() => {
-    if (!text) return items;
-
-    setCursor(-1);
-    scrollToItem(0);
-
-    return (
-      items &&
-      items.filter((item) => {
-        return item.name.toLowerCase().includes(text.toLowerCase());
-      })
-    );
-  }, [items, text]);
 
   return (
     <div className="auto-complete-wrapper" ref={containerRef}>
